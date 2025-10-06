@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3Way Memory Match Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #c6c6c5;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #4e4a49;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #7ab7e4;
+            color: #4e4a49;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .flipped, .matched {
+            background-color: #52a7dd;
+            color: white;
+        }
+        #timer, #restart-btn {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #4e4a49;
+        }
+        #leaderboard {
+            margin-top: 30px;
+            color: #4e4a49;
+        }
+    </style>
+</head>
+<body>
+    <img id="logo" src="3Way BCorp Logo .png" alt="3Way Logo">
+    <h1>3Way Memory Match Game</h1>
+    <div id="timer">Time Left: <span id="time">30</span> seconds</div>
+    <button id="restart-btn">Restart Game</button>
+    <div id="game-board"></div>
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <ol id="scores"></ol>
+    </div>
+
+    <script>
+        const cardValues = [
+            "Eco Spray", "Vanitorials", "Recorra", "Compost Bin",
+            "Refill Station", "Bamboo Cloth", "Zero Waste", "Clean Workspace"
+        ];
+        let cards = [...cardValues, ...cardValues];
+        let flippedCards = [];
+        let matchedCards = [];
+        let timeLeft = 30;
+        let timerInterval;
+        let scores = [];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startTimer() {
+            document.getElementById("time").textContent = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("time").textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Time's up!");
+                    updateLeaderboard(0);
+                }
+            }, 1000);
+        }
+
+        function updateLeaderboard(score) {
+            scores.push(score);
+            scores.sort((a, b) => b - a);
+            const scoreList = document.getElementById("scores");
+            scoreList.innerHTML = "";
+            scores.slice(0, 5).forEach(s => {
+                const li = document.createElement("li");
+                li.textContent = `Score: ${s}`;
+                scoreList.appendChild(li);
+            });
+        }
+
+        function createBoard() {
+            const board = document.getElementById("game-board");
+            board.innerHTML = "";
+            shuffle(cards);
+            cards.forEach((value, index) => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+                card.dataset.value = value;
+                card.dataset.index = index;
+                card.textContent = "";
+                card.addEventListener("click", () => flipCard(card));
+                board.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+            if (flippedCards.length < 2 && !card.classList.contains("flipped") && !card.classList.contains("matched")) {
+                card.classList.add("flipped");
+                card.textContent = card.dataset.value;
+                flippedCards.push(card);
+
+                if (flippedCards.length === 2) {
+                    const [card1, card2] = flippedCards;
+                    if (card1.dataset.value === card2.dataset.value) {
+                        card1.classList.add("matched");
+                        card2.classList.add("matched");
+                        matchedCards.push(card1, card2);
+                        flippedCards = [];
+                        if (matchedCards.length === cards.length) {
+                            clearInterval(timerInterval);
+                            alert("You matched all cards!");
+                            updateLeaderboard(timeLeft);
+                        }
+                    } else {
+                        setTimeout(() => {
+                            card1.classList.remove("flipped");
+                            card2.classList.remove("flipped");
+                            card1.textContent = "";
+                            card2.textContent = "";
+                            flippedCards = [];
+                        }, 800);
+                    }
+                }
+            }
+        }
+
+        document.getElementById("restart-btn").addEventListener("click", () => {
+            clearInterval(timerInterval);
+            timeLeft = 30;
+            matchedCards = [];
+            flippedCards = [];
+            startTimer();
+            createBoard();
+        });
+
+        // Initialize game
+        startTimer();
+        createBoard();
+    </script>
+</body>
+</html>
